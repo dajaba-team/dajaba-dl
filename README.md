@@ -2,11 +2,15 @@
 
 거래별 점수를 계산하는 GINe B 추론 패키지다. 각 대상 거래 시각 T 기준 송·수신 양쪽 계좌의 `[T−24시간, T)` 이력을 입력으로 사용한다.
 
-## 개발 아키텍처 / CI 준비
+## 시스템 아키텍처
 
-![다자바 DL의 거래 그래프 추론과 CI 계획](docs/images/dl-architecture-ci.png)
+![GINe B가 양쪽 계좌의 이력으로 거래를 채점하고 AI 서버가 스캔별 조사 순위를 결합하는 흐름](docs/images/dl-architecture-ci.png)
 
-그래프는 최근 이력 16건을 사용한다. 방향별 입·출금 건수는 전체 24시간 창에서 계산한다. 거래 점수와 별도 경보 순위 비교 도구는 원본 파일명과 헤더 제외 첫 데이터 행부터 센 번호로 연결한다. 보존된 전수 추론은 로컬 검증이다. GitHub CI 구성은 후속 작업이다.
+그래프에는 양쪽 계좌에서 모은 최근 거래를 최대 16건 사용한다. 방향별 입·출금 건수는 24시간 전체 이력에서 계산한다. `dajaba-dl-score`는 원본 파일명(`source_file`)과 헤더 다음 행부터 1로 센 행 번호(`source_row_number`)를 키로 거래별 점수를 `transaction_scores.csv`에 쓰고 실행 정보를 `result.json`에 기록한다.
+
+AI 서버는 원본 키와 백엔드 거래 ID의 매핑으로 DL 점수를 경보의 근거 거래에 연결한다. `GET /v1/dl-rankings/{scan_date}`는 같은 스캔 날짜의 ML 경보 점수와 DL 거래 점수를 이용해 조사 순위를 제공한다. 공식 경보 점수는 ML이 계산하고 위험 등급은 백엔드가 결정한다. [AI 서버의 조사 순위 계산 규칙](https://github.com/dajaba-team/dajaba-ai/blob/f31fbfdfed44468814922167f10247c831431dc4/docs/scoring/01_dl_investigation_ranking.md)
+
+보존된 전수 추론은 로컬에서 검증했다. GitHub CI 구성은 후속 작업이다.
 
 ## 설치 및 실행
 
